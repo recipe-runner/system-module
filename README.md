@@ -1,6 +1,6 @@
 # System module
 
-[![Build Status](https://img.shields.io/travis/recipe-runner/io-module/master.svg?style=flat-square)](https://travis-ci.org/recipe-runner/io-module)
+[![Build Status](https://img.shields.io/travis/recipe-runner/system-module/master.svg?style=flat-square)](https://travis-ci.org/recipe-runner/system-module)
 
 ## Requires
 

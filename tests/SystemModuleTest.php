@@ -73,6 +73,26 @@ class SystemModuleTest extends TestCase
         $this->assertTrue($executionResult->isSuccess());
     }
 
+    public function testMethodRunWithEmptyCommand()
+    {
+        $method = new Method('run');
+        $method->addParameter('command', "");
+
+        $executionResult = $this->module->runMethod($method, new MixedCollection());
+
+        $this->assertTrue($executionResult->isSuccess());
+    }
+
+    public function testMethodRunWithEmptyCommandAsArray()
+    {
+        $method = new Method('run');
+        $method->addParameter('command', []);
+
+        $executionResult = $this->module->runMethod($method, new MixedCollection());
+
+        $this->assertTrue($executionResult->isSuccess());
+    }
+
     /**
     * @expectedException RuntimeException
     * @expectedExceptionMessage Expected between 1 and 3 parameters.
@@ -95,6 +115,20 @@ class SystemModuleTest extends TestCase
             ->addParameter('param2', '')
             ->addParameter('param3', '')
             ->addParameter('param4', '');
+
+        $executionResult = $this->module->runMethod($method, new MixedCollection());
+    }
+
+    /**
+    * @expectedException InvalidArgumentException
+    * @expectedExceptionMessage Unexpected parameter name.
+    */
+    public function testRunMustFailWhenThereAreMoreThan1ParameterAndTheirKeysAreNotValid(): void
+    {
+        $method = new Method('run');
+        $method->addParameter('command', '')
+            ->addParameter('fake', '')
+            ->addParameter('timeout', '');
 
         $executionResult = $this->module->runMethod($method, new MixedCollection());
     }

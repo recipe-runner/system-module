@@ -9,17 +9,21 @@
 
 ## Installation
 
-The preferred installation method is [composer](https://getcomposer.org):
+Create a recipe and add the module to the `packages` section:
 
-```bash
-composer require recipe-runner/system-module
+```yaml
+name: "Your recipe"
+extra:
+  rr:
+    packages:
+      "recipe-runner/system-module": "1.0.x-dev"
 ```
 
 ## Usage
 
 ### Method: `run`
 
-Write a message to the output.
+Executes a command.
 
 ```yaml
 steps:
@@ -27,15 +31,15 @@ steps:
         - run: "echo hi user"
 ```
 
-A command could be split into command and parameters. This way of configurin a command will escape parameters automatically.
+A command could be split into command and parameters. This way, parameters will be escaped automatically.
 
 ```yaml
 steps:
     - actions:
         run:
             command:
-                "echo"
-                "hi user"
+                "echo"      # Command
+                "hi user"   # parameter 1
 ```
 
 You can also set a timeout and the *current working directory*
@@ -49,7 +53,15 @@ steps:
             cwd: "/temp"
 ```
 
-## Unit tests
+## For module developers
+
+The preferred installation method is [composer](https://getcomposer.org):
+
+```bash
+composer require recipe-runner/system-module
+```
+
+### Unit tests
 
 You can run the unit tests with the following command:
 

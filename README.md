@@ -9,19 +9,17 @@
 
 ## Installation
 
-```yaml
-name: "Your recipe"
-extra:
-  rr:
-    packages:
-      "recipe-runner/system-module": "1.0.x-dev"
+The preferred installation method is [composer](https://getcomposer.org):
+
+```bash
+composer require recipe-runner/system-module
 ```
 
 ## Usage
 
 ### Method: `run`
 
-Executes a command.
+Write a message to the output.
 
 ```yaml
 steps:
@@ -29,15 +27,15 @@ steps:
         - run: "echo hi user"
 ```
 
-A command could be split into command and parameters. This way of configuring a command will escape parameters automatically.
+A command could be split into command and parameters. This way of configurin a command will escape parameters automatically.
 
 ```yaml
 steps:
     - actions:
         run:
             command:
-                "echo"      # Command
-                "hi user"   # parameter 1
+                "echo"
+                "hi user"
 ```
 
 You can also set a timeout and the *current working directory*
@@ -51,14 +49,7 @@ steps:
             cwd: "/temp"
 ```
 
-## Developers
-The preferred installation method is [composer](https://getcomposer.org):
-
-```bash
-composer require recipe-runner/system-module
-```
-
-### Unit tests
+## Unit tests
 
 You can run the unit tests with the following command:
 

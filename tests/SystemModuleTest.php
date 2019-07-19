@@ -101,20 +101,6 @@ class SystemModuleTest extends TestCase
 
     /**
     * @expectedException InvalidArgumentException
-    * @expectedExceptionMessage Unexpected parameter name.
-    */
-    public function testRunMustFailWhenThereAreMoreThan1ParameterAndTheirKeysAreNotValid(): void
-    {
-        $method = new Method('run');
-        $method->addParameter('command', '')
-            ->addParameter('fake', '')
-            ->addParameter('timeout', '');
-
-        $executionResult = $this->module->runMethod($method, new MixedCollection());
-    }
-
-    /**
-    * @expectedException InvalidArgumentException
     * @expectedExceptionMessage Invalid command. Expected string or array value.
     */
     public function testRunMustFailWhenCommandParameterIsNotStringOrArray(): void

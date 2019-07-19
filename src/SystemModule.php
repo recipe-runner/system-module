@@ -1,14 +1,5 @@
 <?php
 
-/*
- * This file is part of the "Recipe Runner" project.
- *
- * (c) Víctor Puertas <http://github.com/yosymfony>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace RecipeRunner\SystemModule;
 
 use InvalidArgumentException;
@@ -19,11 +10,6 @@ use RuntimeException;
 use Symfony\Component\Process\Process;
 use Yosymfony\Collection\CollectionInterface;
 
-/**
- * System module. It contains a method for executing commands.
- *
- * @author Víctor Puertas <vpgugr@gmail.com>
- */
 class SystemModule extends ModuleBase
 {
     public function __construct()
@@ -41,20 +27,18 @@ class SystemModule extends ModuleBase
     }
     
     /**
-     * Executes a command.
+     * Write a message to the output.
      *
      * ```yaml
      * run: "echo hi"
      * ```
      * or
-     *
      * ```yaml
      * run:
      *   command: "echo hi"
      *   timeout: 60
      * ```
      * or
-     *
      * ```yaml
      * run:
      *   command:
@@ -84,18 +68,13 @@ class SystemModule extends ModuleBase
 
     private function validateNumberOfParameters(Method $method): void
     {
-        $parameters = $method->getParameters();
-        $numberOfParameters = $parameters->count();
+        $numberOfParameters = $method->getParameters()->count();
 
-        if ($numberOfParameters == 0 || $numberOfParameters > 3) {
-            throw new RuntimeException('Expected between 1 and 3 parameters.');
+        if ($numberOfParameters >= 1 && $numberOfParameters < 3) {
+            return;
         }
 
-        if ($numberOfParameters > 1) {
-            if ($parameters->keys()->intersect(['command', 'timeout', 'cwd'])->count() != $numberOfParameters) {
-                throw new InvalidArgumentException("Unexpected parameter name.");
-            }
-        }
+        throw new RuntimeException('Expected between 1 and 3 parameters.');
     }
 
     private function createProcess(Method $method): Process

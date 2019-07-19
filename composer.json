@@ -1,9 +1,10 @@
 {
     "name": "recipe-runner/system-module",
-    "description": "System module for Recipe Runner",
+    "description": "System module with methods for executing commands and handling files",
     "type": "library",
     "keywords": [
         "system",
+        "command",
         "module",
         "recipe runner"
     ],

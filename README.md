@@ -47,7 +47,7 @@ You can also set a timeout and the *current working directory*
 ```yaml
 steps:
     - actions:
-        run:
+        - run:
             command: "echo hi user"
             timeout: 60
             cwd: "/temp"
@@ -60,7 +60,7 @@ Makes a copy of a single file.
 ```yaml
 steps:
     - actions:
-        copy_file:
+        - copy_file:
             from: "/dir1/file.txt"
             to: "/tmp/file.txt"
 ```
@@ -72,7 +72,7 @@ Copies all the contents of the source directory into the target one.
 ```yaml
 steps:
     - actions:
-        mirror_dir:
+        - mirror_dir:
             from: "/dir1"
             to: "/tmp"
 ```
@@ -105,7 +105,7 @@ Saves the given contents into a file.
 ```yaml
 steps:
     - actions:
-        write_file:
+        - write_file:
             filename: "/tmp/hi.txt"
             content: "hi user"
 ```

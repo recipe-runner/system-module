@@ -53,9 +53,55 @@ steps:
             cwd: "/temp"
 ```
 
+### Method: `copy_file`
+
+Makes a copy of a single file.
+
+```yaml
+steps:
+    - actions:
+        copy_file:
+            from: "/dir1/file.txt"
+            to: "/tmp/file.txt"
+```
+
+### Method: `mirror_dir`
+
+Copies all the contents of the source directory into the target one.
+
+```yaml
+steps:
+    - actions:
+        mirror_dir:
+            from: "/dir1"
+            to: "/tmp"
+```
+
+### Method: `read_file`
+
+Read the content of a file.
+
+```yaml
+steps:
+    - actions:
+        read_file: "/tmp/hi.txt"
+```
+
+### Method: `write_file`
+
+Saves the given contents into a file.
+
+```yaml
+steps:
+    - actions:
+        write_file:
+            filename: "/tmp/hi.txt"
+            content: "hi user"
+```
+
 ## For module developers
 
-The preferred installation method is [composer](https://getcomposer.org):
+The preferred installation method is [Composer](https://getcomposer.org):
 
 ```bash
 composer require recipe-runner/system-module

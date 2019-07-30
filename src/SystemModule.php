@@ -68,7 +68,7 @@ class SystemModule extends ModuleBase
      *
      * @param Method
      *
-     * @return ExecutionResult Result with an empty JSON.
+     * @return ExecutionResult
      */
     protected function run(Method $method): ExecutionResult
     {
@@ -129,7 +129,7 @@ class SystemModule extends ModuleBase
 
         $timeout = $parameters->getOrDefault('timeout', 60);
 
-        if (!\is_int($timeout) || (\is_int($timeout) && $timeout < 0)) {
+        if ($timeout !== null && (!\is_int($timeout) || (\is_int($timeout) && $timeout < 0))) {
             throw new InvalidArgumentException("Invalid timeout value. Value found: {$timeout}.");
         }
 

@@ -84,8 +84,8 @@ Read the content of a file.
 ```yaml
 steps:
     - actions:
-        read_file: "/tmp/hi.txt"
-        register: "file_content"
+        - read_file: "/tmp/hi.txt"
+          register: "file_content"
 ```
 
 File content available at `content`:

@@ -85,6 +85,17 @@ Read the content of a file.
 steps:
     - actions:
         read_file: "/tmp/hi.txt"
+        register: "file_content"
+```
+
+File content available at `content`:
+
+```yml
+registered["file_content"]["content"]
+
+## or
+
+registered.get('file_content.content')
 ```
 
 ### Method: `write_file`

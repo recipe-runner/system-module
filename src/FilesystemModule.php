@@ -35,9 +35,11 @@ class FilesystemModule extends ModuleBase
         parent::__construct();
         $this->fs = $fs ?? new Filesystem();
         $this->addMethodHandler('copy_file', [$this, 'copyFile']);
+        $this->addMethodHandler('make_dir', [$this, 'makeDir']);
         $this->addMethodHandler('mirror_dir', [$this, 'mirrorDir']);
         $this->addMethodHandler('write_file', [$this, 'writeFile']);
         $this->addMethodHandler('read_file', [$this, 'readFile']);
+        $this->addMethodHandler('remove', [$this, 'remove']);
     }
 
     /**
@@ -76,6 +78,47 @@ class FilesystemModule extends ModuleBase
 
         try {
             $this->fs->copy($fromFile, $toFile);
+        } catch (\Throwable $th) {
+            $isSuccessful = false;
+        }
+
+        return new ExecutionResult(ExecutionResult::EMPTY_JSON, $isSuccessful);
+    }
+
+    /**
+     * Makes a directory recursively. On POSIX filesystems, directories are created
+     * with a default mode value 0777
+     *
+     * @param Method $method Method information.
+     *
+     * Parameters:
+     *  - dir: The directory path
+     *  - mode: The directory mode. Default: 0777
+     *
+     * @return ExecutionResult Execution result.
+     *
+     * Variables: none.
+     */
+    protected function makeDir(Method $method): ExecutionResult
+    {
+        $isSuccessful = true;
+        $parameters = $method->getParameters();
+
+        $this->assertNumberOfParametersMustBeBetween($parameters, 1, 2);
+
+        if ($parameters->count() == 1) {
+            $this->assertParameterNamesMustBeIn($parameters, new MixedCollection(['dir', 0]));
+        } else {
+            $this->assertParameterNamesMustBeIn($parameters, new MixedCollection(['dir', 'mode']));
+        }
+
+        $this->assertOptionalParameterIsInteger($parameters, 'mode');
+
+        $dir = $method->getParameterNameOrPosition('dir', 0);
+        $mode = $parameters->getOrDefault('mode', 0777);
+
+        try {
+            $this->fs->mkdir($dir, $mode);
         } catch (\Throwable $th) {
             $isSuccessful = false;
         }
@@ -154,6 +197,34 @@ class FilesystemModule extends ModuleBase
     }
 
     /**
+     * Deletes files, directories and symlinks.
+     *
+     * @param Method $method Method information.
+     *
+     * Parameters: list of files/directories or symlinks.
+     *
+     * @return ExecutionResult Execution result.
+     *
+     * variables: none.
+     */
+    protected function remove(Method $method): ExecutionResult
+    {
+        $isSuccessful = true;
+
+        $this->assertNumberOfParametersAtLeast($method->getParameters(), 1);
+
+        $files = $method->getParameters()->toArray();
+
+        try {
+            $this->fs->remove($files);
+        } catch (\Throwable $th) {
+            $isSuccessful = false;
+        }
+
+        return new ExecutionResult(ExecutionResult::EMPTY_JSON, $isSuccessful);
+    }
+
+    /**
      * Saves the given contents into a file.
      *
      * @param Method $method Method information.
@@ -187,10 +258,19 @@ class FilesystemModule extends ModuleBase
         return new ExecutionResult(ExecutionResult::EMPTY_JSON, $isSuccessful);
     }
 
+    private function assertNumberOfParametersMustBeBetween(CollectionInterface $parameters, int $min, int $max): void
+    {
+        $numberOfParams = $parameters->count();
+
+        if ($numberOfParams < $min || $numberOfParams > $max) {
+            throw new RuntimeException("Expected between $min and $max parameters.");
+        }
+    }
+
     private function assertNumberOfParametersIs(CollectionInterface $parameters, int $number): void
     {
         if ($parameters->count() != $number) {
-            throw new RuntimeException("Expected {$number} parameters.");
+            throw new RuntimeException("Expected $number parameters.");
         }
     }
 
@@ -202,21 +282,37 @@ class FilesystemModule extends ModuleBase
             if (!$expectedParameters->any(function ($expectedParam) use ($key) {
                 return $expectedParam === $key;
             })) {
-                throw new RuntimeException("Parameter \"{$key}\" is not recognized.");
+                throw new RuntimeException("Parameter \"$key\" is not recognized.");
             }
         }
     }
 
-    private function assertParameterIsNotEmptyString(CollectionInterface $parameters, $parameterName)
+    private function assertParameterIsNotEmptyString(CollectionInterface $parameters, $parameterName): void
     {
         $value = $parameters->get($parameterName);
 
         if (!\is_string($value)) {
-            throw new InvalidArgumentException("Expected a string as parameter \"{$parameterName}\".");
+            throw new InvalidArgumentException("Expected a string as parameter \"$parameterName\".");
         }
 
         if (\trim($value) == '') {
-            throw new InvalidArgumentException("Parameter \"{$parameterName}\" cannot be white space or empty.");
+            throw new InvalidArgumentException("Parameter \"$parameterName\" cannot be white space or empty.");
+        }
+    }
+
+    private function assertOptionalParameterIsInteger(CollectionInterface $parameters, $parameterName):void
+    {
+        $value = $parameters->getOrDefault($parameterName, 0);
+
+        if (!\is_int($value)) {
+            throw new InvalidArgumentException("Parameter \"$parameterName\" is expected as integer.");
+        }
+    }
+
+    private function assertNumberOfParametersAtLeast(CollectionInterface $parameters, int $number): void
+    {
+        if ($parameters->count() < $number) {
+            throw new RuntimeException("Expected at least $number parameters.");
         }
     }
 }

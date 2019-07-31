@@ -77,6 +77,87 @@ class FilesystemModuleTest extends TestCase
     }
 
     /**
+     * @testWith    [0]
+     *              ["dir"]
+     */
+    public function testMakeDirWithDefaultMode($parameterName): void
+    {
+        $dir = '/dir1';
+        $method = new Method('make_dir');
+        $method->addParameter($parameterName, $dir);
+        $this->fsMock->expects($this->once())->method('mkdir')->with($this->equalTo($dir), $this->equalTo(0777));
+
+        $this->runMethod($method);
+    }
+
+    /**
+     * @testWith    [755]
+     *              [744]
+     */
+    public function testMakeDirWithMode(int $mode): void
+    {
+        $dir = '/dir1';
+        $method = new Method('make_dir');
+        $method->addParameter('dir', $dir)
+            ->addParameter('mode', $mode);
+
+        $this->fsMock->expects($this->once())->method('mkdir')->with($this->equalTo($dir), $this->equalTo($mode));
+
+        $this->runMethod($method);
+    }
+
+    /**
+    * @expectedException RuntimeException
+    * @expectedExceptionMessage Expected between 1 and 2 parameters.
+    */
+    public function testMakeDirMustFailWhenTheNumberOfParamIsLessThan1(): void
+    {
+        $method = new Method('make_dir');
+
+        $this->runMethod($method);
+    }
+
+    /**
+    * @expectedException RuntimeException
+    * @expectedExceptionMessage Expected between 1 and 2 parameters.
+    */
+    public function testMakeDirMustFailWhenTheNumberOfParamIsGreaterThan2(): void
+    {
+        $method = new Method('make_dir');
+        $method->addParameter('dir', '/tmp2')
+            ->addParameter('mode', 0777)
+            ->addParameter('extra', 'bla bla');
+
+        $this->runMethod($method);
+    }
+
+    /**
+    * @expectedException RuntimeException
+    * @expectedExceptionMessage is not recognized.
+    */
+    public function testMakeDirMustFailWhenThereIsAnInvalidParamName(): void
+    {
+        $method = new Method('mirror_dir');
+        $method->addParameter('dir', '/tmp/1')
+            ->addParameter('unexpected', '/tmp/2');
+
+        $this->runMethod($method);
+    }
+
+    /**
+    * @expectedException InvalidArgumentException
+    * @expectedExceptionMessage Parameter "mode" is expected as integer.
+    */
+    public function testMakeDirMustFailWhenModeIsNotAnIntergerValue(): void
+    {
+        $method = new Method('make_dir');
+        $method->addParameter('dir', '/tmp/1')
+            ->addParameter('mode', 'bad value');
+
+        $this->runMethod($method);
+    }
+
+    /**
     * @expectedException InvalidArgumentException
     *
     * @testWith [1,1]
@@ -150,6 +231,29 @@ class FilesystemModuleTest extends TestCase
         $method = new Method('mirror_dir');
         $method->addParameter('from', $fromValue)
             ->addParameter('to', $toValue);
+
+        $this->runMethod($method);
+    }
+
+    public function testRemove(): void
+    {
+        $files = ['file1', 'file2'];
+        $method = new Method('remove');
+        $method->addParameter(0, $files[0])
+            ->addParameter(1, $files[1]);
+
+        $this->fsMock->expects($this->once())->method('remove')->with($this->equalTo($files));
+
+        $this->runMethod($method);
+    }
+
+    /**
+    * @expectedException RuntimeException
+    * @expectedExceptionMessage Expected at least 1 parameters.
+    */
+    public function testRemoveMustFailWhenTheNumberOfParametersIsZero(): void
+    {
+        $method = new Method('remove');
 
         $this->runMethod($method);
     }

@@ -65,6 +65,25 @@ steps:
             to: "/tmp/file.txt"
 ```
 
+### Method: `make_dir`
+
+Makes a directory recursively. On POSIX filesystems, directories are created with a default mode value 0777.
+
+```yaml
+steps:
+    - actions:
+        - make_dir: "/dir1"
+```
+or you can set the directory mode with the parameter `mode`
+
+```yaml
+steps:
+    - actions:
+        - make_dir:
+            dir: "/dir1"
+            mode: 0777
+```
+
 ### Method: `mirror_dir`
 
 Copies all the contents of the source directory into the target one.
@@ -79,7 +98,7 @@ steps:
 
 ### Method: `read_file`
 
-Read the content of a file.
+Read the content of a file or URL address.
 
 ```yaml
 steps:
@@ -96,6 +115,27 @@ registered["file_content"]["content"]
 ## or
 
 registered.get('file_content.content')
+```
+
+### Method: `remove`
+
+Deletes files, directories and symlinks.
+
+```yaml
+steps:
+    - actions:
+        - remove: "/tmp/hi.txt"
+```
+
+or 
+
+```yaml
+steps:
+    - actions:
+        - remove: 
+            - "/tmp/hi.txt"
+            - "/dir1"
+            - "/home/user/symlink1.sh"
 ```
 
 ### Method: `write_file`

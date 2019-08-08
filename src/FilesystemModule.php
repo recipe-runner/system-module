@@ -30,11 +30,16 @@ class FilesystemModule extends ModuleBase
     /** @var Filesystem */
     private $fs;
 
-    public function __construct(Filesystem $fs = null)
+    /** @var bool */
+    private $enableCurl;
+
+    public function __construct(Filesystem $fs = null, bool $enableCurl = true)
     {
         parent::__construct();
         $this->fs = $fs ?? new Filesystem();
+        $this->enableCurl = $enableCurl;
         $this->addMethodHandler('copy_file', [$this, 'copyFile']);
+        $this->addMethodHandler('download_file', [$this, 'downloadFile']);
         $this->addMethodHandler('make_dir', [$this, 'makeDir']);
         $this->addMethodHandler('mirror_dir', [$this, 'mirrorDir']);
         $this->addMethodHandler('write_file', [$this, 'writeFile']);
@@ -80,6 +85,46 @@ class FilesystemModule extends ModuleBase
             $this->fs->copy($fromFile, $toFile);
         } catch (\Throwable $th) {
             $isSuccessful = false;
+        }
+
+        return new ExecutionResult(ExecutionResult::EMPTY_JSON, $isSuccessful);
+    }
+
+    /**
+         * Download a file from network.
+         *
+         * @param Method $method Method information.
+         *
+         * Parameters:
+         *  - url: The URL of the file.
+         *  - filename: The file in which the URL content will be saved.
+         *
+         * @return ExecutionResult Execution result.
+         *
+         * Variables: none.
+         */
+    protected function downloadFile(Method $method): ExecutionResult
+    {
+        $isSuccessful = true;
+        $parameters = $method->getParameters();
+
+        $this->assertNumberOfParametersIs($parameters, 2);
+        $this->assertParameterNamesMustBeIn($parameters, new MixedCollection(['url', 'filename']));
+        $this->assertParameterIsNotEmptyString($parameters, 'url');
+        $this->assertParameterIsNotEmptyString($parameters, 'filename');
+        $url = $parameters->get('url');
+        $filename = $parameters->get('filename');
+
+        if (!$this->isValidUrl($url)) {
+            throw new RuntimeException("The URL \"$url\" is not valid.");
+        }
+
+        $this->getIO()->write("Downloading file from \"$url\" into \"$filename\"");
+
+        if ($this->enableCurl && $this->isCurlAvailable()) {
+            $isSuccessful = $this->downloadFileWithCurl($url, $filename);
+        } else {
+            $isSuccessful = $this->downloadFileWithFopen($url, $filename);
         }
 
         return new ExecutionResult(ExecutionResult::EMPTY_JSON, $isSuccessful);
@@ -256,6 +301,61 @@ class FilesystemModule extends ModuleBase
         }
 
         return new ExecutionResult(ExecutionResult::EMPTY_JSON, $isSuccessful);
+    }
+
+    private function downloadFileWithCurl(string $url, string $file): bool
+    {
+        $isSuccessful = true;
+        $ch = \curl_init($url);
+        \curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        \curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        \curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, 'curlProgress');
+        $data = \curl_exec($ch);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if (\curl_errno($ch) || $status != 200) {
+            $isSuccessful = false;
+        }
+
+        \curl_close($ch);
+
+        if ($isSuccessful) {
+            $fileHandle = \fopen($file, 'w+');
+            \fputs($fileHandle, $data);
+            \fclose($fileHandle);
+        }
+
+        return $isSuccessful;
+    }
+
+    private function curlProgress($resource, $downloadSize, $downloaded, $upload_size, $uploaded)
+    {
+        $this->getIO()->write("Downloading $downloadSize/$downloaded\r");
+    }
+
+    private function downloadFileWithFopen(string $url, string $file): bool
+    {
+        $isSuccessful = true;
+
+        try {
+            file_put_contents($file, fopen($url, 'r'));
+        } catch (\Throwable $th) {
+            $isSuccessful = false;
+        }
+
+        return $isSuccessful;
+    }
+
+    private function isCurlAvailable(): bool
+    {
+        return \function_exists('curl_version');
+    }
+
+    private function isValidUrl(string $url): bool
+    {
+        $result = \parse_url($url, PHP_URL_SCHEME);
+
+        return $result === null ? false : true;
     }
 
     private function assertNumberOfParametersMustBeBetween(CollectionInterface $parameters, int $min, int $max): void

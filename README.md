@@ -65,6 +65,18 @@ steps:
             to: "/tmp/file.txt"
 ```
 
+### Method: `download_file`
+
+Download a file from network.
+
+```yaml
+steps:
+    - actions:
+        - download_file: 
+            url: "https://phar.phpunit.de/phpunit-8.phar"
+            filename: "phpunit.phar"
+```
+
 ### Method: `make_dir`
 
 Makes a directory recursively. On POSIX filesystems, directories are created with a default mode value 0777.

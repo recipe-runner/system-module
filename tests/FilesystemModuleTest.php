@@ -23,6 +23,9 @@ class FilesystemModuleTest extends TestCase
     /** @var FilesystemModule */
     private $module;
 
+    /** @var FilesystemModule */
+    private $moduleWithCurlDisabled;
+
     /** @var MockObject */
     private $fsMock;
 
@@ -32,6 +35,8 @@ class FilesystemModuleTest extends TestCase
         $this->fsMock = $this->getMockBuilder(Filesystem::class)->disableOriginalConstructor()->getMock();
         $this->module = new FilesystemModule($this->fsMock);
         $this->module->setIO($IOMock);
+        $this->moduleWithCurlDisabled = new FilesystemModule($this->fsMock, false);
+        $this->moduleWithCurlDisabled->setIO($IOMock);
     }
 
     public function testCopyFile(): void
@@ -72,6 +77,108 @@ class FilesystemModuleTest extends TestCase
         $method = new Method('copy_file');
         $method->addParameter($validParamName, 'file.txt')
             ->addParameter('unexpected', 'file.txt');
+
+        $this->runMethod($method);
+    }
+
+    /**
+     * @testWith    [true]
+     *              [false]
+     */
+    public function testDownloadFile(bool $curlEnabled): void
+    {
+        $rootDir = vfsStream::setup();
+        $filename = 'test.phar';
+        $filenamePath = $rootDir->url()."/$filename";
+        $urlFile = 'https://github.com/spress/Spress/releases/download/v2.2.0/spress.phar';
+        $method = new Method('download_file');
+        $method->addParameter('url', $urlFile)
+            ->addParameter('filename', $filenamePath);
+
+        $result = $this->runMethod($method, $curlEnabled);
+
+        $this->assertTrue($result->isSuccess());
+        $this->assertTrue($rootDir->hasChild($filename));
+    }
+
+    /**
+     * @testWith    [true]
+     *              [false]
+     */
+    public function testDowndloadFileMustReturnFileWhenURLNotFound(bool $curlEnabled): void
+    {
+        $rootDir = vfsStream::setup();
+        $filename = 'test.phar';
+        $filenamePath = $rootDir->url()."/$filename";
+        $urlFile = 'https://github.com/spress/Spress/releases/not-found/spress.phar';
+        $method = new Method('download_file');
+        $method->addParameter('url', $urlFile)
+            ->addParameter('filename', $filenamePath);
+
+        $result = $this->runMethod($method, $curlEnabled);
+
+        $this->assertFalse($result->isSuccess());
+        $this->assertFalse($rootDir->hasChild($filename));
+    }
+
+    /**
+    * @expectedException RuntimeException
+    * @expectedExceptionMessage The URL "test.phar" is not valid.
+    */
+    public function testDownloadFileMustFailWhenURLIsNotValid(): void
+    {
+        $urlFile = 'test.phar';
+        $method = new Method('download_file');
+        $method->addParameter('url', $urlFile)
+            ->addParameter('filename', 'test.phar');
+
+        $this->runMethod($method);
+    }
+
+    /**
+    * @expectedException RuntimeException
+    * @expectedExceptionMessage Expected 2 parameters.
+    */
+    public function testDownloadFileMustFailWhenTheNumberOfParamsIsNotExactly2(): void
+    {
+        $method = new Method('download_file');
+        $method->addParameter('url', 'http://blabla.com/file.txt')
+            ->addParameter('filename', 'file.txt')
+            ->addParameter('param3', 'bla blat');
+
+        $this->runMethod($method);
+    }
+
+    /**
+    * @expectedException RuntimeException
+    * @expectedExceptionMessage is not recognized.
+    *
+    * @testWith ["url"]
+    *           ["filename"]
+    */
+    public function testDownloadFileMustFailWhenThereIsAnInvalidParamName(string $validParamName): void
+    {
+        $method = new Method('download_file');
+        $method->addParameter($validParamName, 'value')
+            ->addParameter('unexpected', 'bla bla');
+
+        $this->runMethod($method);
+    }
+
+    /**
+    * @expectedException InvalidArgumentException
+    *
+    * @testWith [1,1]
+    *           [true, true]
+    *           ["", ""]
+    *           ["  ", "  "]
+    *           [null, null]
+    */
+    public function testDownloadFileMustFailWhenFromOrToIsNotAStringValueOrItIsEmptyString($url, $filename): void
+    {
+        $method = new Method('download_file');
+        $method->addParameter('url', $url)
+            ->addParameter('filename', $filename);
 
         $this->runMethod($method);
     }
@@ -386,8 +493,12 @@ class FilesystemModuleTest extends TestCase
         $this->runMethod($method);
     }
 
-    private function runMethod(Method $method): ExecutionResult
+    private function runMethod(Method $method, bool $curlEnabled = true): ExecutionResult
     {
-        return $this->module->runMethod($method, new MixedCollection());
+        if ($curlEnabled) {
+            return $this->module->runMethod($method, new MixedCollection());
+        }
+        
+        return $this->moduleWithCurlDisabled->runMethod($method, new MixedCollection());
     }
 }

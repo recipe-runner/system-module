@@ -309,7 +309,8 @@ class FilesystemModule extends ModuleBase
         $ch = \curl_init($url);
         \curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         \curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        \curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, 'curlProgress');
+        \curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+        \curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, [$this, 'curlProgress']);
         $data = \curl_exec($ch);
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 

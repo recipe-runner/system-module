@@ -110,7 +110,7 @@ steps:
 
 ### Method: `read_file`
 
-Read the content of a file or URL address.
+Reads the content of a file or URL address.
 
 ```yaml
 steps:

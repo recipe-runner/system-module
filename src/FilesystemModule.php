@@ -207,7 +207,7 @@ class FilesystemModule extends ModuleBase
     }
 
     /**
-     * Read the content of a file.
+     * Reads the content of a file.
      *
      * @param Method $method Method information.
      *

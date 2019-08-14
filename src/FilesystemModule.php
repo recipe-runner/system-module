@@ -33,6 +33,9 @@ class FilesystemModule extends ModuleBase
     /** @var bool */
     private $enableCurl;
 
+    /** @var bool */
+    private $isFirstCurlDownloadStatusOutput = true;
+
     public function __construct(Filesystem $fs = null, bool $enableCurl = true)
     {
         parent::__construct();
@@ -119,7 +122,8 @@ class FilesystemModule extends ModuleBase
             throw new RuntimeException("The URL \"$url\" is not valid.");
         }
 
-        $this->getIO()->write("Downloading file from \"$url\" into \"$filename\"");
+        $this->getIO()->write("Downloading file from \"{$this->truncateText($url)}\"");
+        $this->getIO()->write("into \"$filename\"");
 
         if ($this->enableCurl && $this->isCurlAvailable()) {
             $isSuccessful = $this->downloadFileWithCurl($url, $filename);
@@ -319,6 +323,7 @@ class FilesystemModule extends ModuleBase
         }
 
         \curl_close($ch);
+        $this->getIO()->write('', true);
 
         if ($isSuccessful) {
             $fileHandle = \fopen($file, 'w+');
@@ -331,7 +336,16 @@ class FilesystemModule extends ModuleBase
 
     private function curlProgress($resource, $downloadSize, $downloaded, $upload_size, $uploaded)
     {
-        $this->getIO()->write("Downloading $downloadSize/$downloaded\r");
+        $message = \str_pad("Progress: $downloadSize/$downloaded bytes", 80);
+
+        if ($this->isFirstCurlDownloadStatusOutput) {
+            $this->getIO()->write($message, false);
+            $this->isFirstCurlDownloadStatusOutput = false;
+
+            return;
+        }
+
+        $this->getIO()->write(str_repeat("\x08", \strlen($message)).$message, false);
     }
 
     private function downloadFileWithFopen(string $url, string $file): bool
@@ -415,5 +429,14 @@ class FilesystemModule extends ModuleBase
         if ($parameters->count() < $number) {
             throw new RuntimeException("Expected at least $number parameters.");
         }
+    }
+
+    private function truncateText(string $text, int $max = 60)
+    {
+        if (\strlen($text) > $max) {
+            return \substr($text, 0, $max).'...';
+        }
+
+        return $text;
     }
 }
